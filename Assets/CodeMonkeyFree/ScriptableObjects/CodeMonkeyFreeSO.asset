@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d777d270cee3a5c419cb21a828556f1a, type: 3}
+  m_Name: CodeMonkeyFreeSO
+  m_EditorClassIdentifier: 
+  currentVersion: 1.00
+  subtype: lunarLanderFree
+  lastShownTimestamp: 1784718212
+  lastUpdateResponse:
+    version: 1.00
+    versionUrl: https://unitycodemonkey.com
+  checkedLastUpdateTimestamp: 1784718212
+  lastQOTDResponse:
+    questionId: 324
+    questionText: What is JSON and what is it useful for?
+    answerA: JavaScript Over Node, programming pattern
+    answerB: JavaScript Object Notation, data format
+    answerC: Jumping-Signal Over Nonce, crypto concept
+    answerD: 
+    answerE: 
+  lastQotdTimestamp: 1784718212
+  lastDynamicHeaderResponse:
+    topImageUrl: https://codemonkeyexternal.blob.core.windows.net/external/Misc/summer2025CodeMonkeyBundle.png
+    topText: Get 80% OFF on ALL my Courses and Games!!!
+    topLink: summerbundle
+    bottomText: DONT MISS the latest important trends, sign up for my FREE Weekly
+      Newsletter!
+    bottomLink: gamedevreport
+  lastDynamicHeaderTimestamp: 1784718212
+  websiteLatestMessage:
+    text: <a href="https://cmonkey.co/freecourses">Check out all my FREE courses!
+      Click here!</a>
+  websiteLatestMessageTimestamp: 1784718212
+  websiteLatestVideos:
+    videos:
+    - youTubeId: -qpKrATW4wM
+      title: TOP 10 FREE NEW Assets JULY 2026!
+    - youTubeId: IQlMciGDMTY
+      title: This method helps you find Game Ideas that make MILLIONS!
+    - youTubeId: zkKU7Vj5Syc
+      title: Do THIS to pick your next SUCCESSFUL game idea!
+    - youTubeId: NjNbIHHu9Z0
+      title: Steam Marketing EXPERT on how to find SUCCESS in 2026!
+  websiteLatestVideosTimestamp: 1784718212
