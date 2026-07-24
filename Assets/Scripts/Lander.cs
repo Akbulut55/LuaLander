@@ -223,7 +223,7 @@ public class Lander : MonoBehaviour
     private void ConsumeFuel(float amount)
     {
         float fuelConsumptionAmount = amount;
-        if (fuelAmount <= amount)
+        if (fuelAmount <= amount * Time.deltaTime)
         {
             fuelAmount = 0f;
             return;
