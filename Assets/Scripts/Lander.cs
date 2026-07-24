@@ -67,9 +67,10 @@ public class Lander : MonoBehaviour
         {
             default:
                 case State.WaitingToStart:
-                    if (Keyboard.current.upArrowKey.isPressed ||
-                        Keyboard.current.leftArrowKey.isPressed ||
-                        Keyboard.current.rightArrowKey.isPressed)
+                    if (GameInput.Instance.IsUpActionPressed() ||
+                        GameInput.Instance.IsLeftActionPressed() ||
+                        GameInput.Instance.IsRightActionPressed() ||
+                        GameInput.Instance.GetMovementInputVector2() != Vector2.zero)
                     {
                         landerRigidbody2D.gravityScale = GRAVITY_NORMAL;
                         SetState(State.Normal);
@@ -82,7 +83,9 @@ public class Lander : MonoBehaviour
                         return;
                     }
 
-                    if (Keyboard.current.upArrowKey.isPressed)
+                    float gamepadDeadzone = .4f;
+
+                    if (GameInput.Instance.IsUpActionPressed() || GameInput.Instance.GetMovementInputVector2().y > gamepadDeadzone)
                     {
                         float force = 700f;
                         landerRigidbody2D.AddForce(force * transform.up * Time.deltaTime);
@@ -90,7 +93,7 @@ public class Lander : MonoBehaviour
                         OnUpForce?.Invoke(this, EventArgs.Empty);
                     }
 
-                    if (Keyboard.current.leftArrowKey.isPressed)
+                    if (GameInput.Instance.IsLeftActionPressed() || GameInput.Instance.GetMovementInputVector2().x < -gamepadDeadzone)
                     {
                         float turnSpeed = 100f;
                         landerRigidbody2D.AddTorque(turnSpeed * Time.deltaTime);
@@ -99,7 +102,7 @@ public class Lander : MonoBehaviour
 
                     }
 
-                    if (Keyboard.current.rightArrowKey.isPressed)
+                    if (GameInput.Instance.IsRightActionPressed() || GameInput.Instance.GetMovementInputVector2().x > gamepadDeadzone)
                     {
                         float turnSpeed = -100f;
                         landerRigidbody2D.AddTorque(turnSpeed * Time.deltaTime);
