@@ -1,25 +1,13 @@
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Lander : MonoBehaviour
 {
-    public const float GRAVITY_NORMAL = 0.7f;
-
-    public static Lander Instance { get; private set; }
-
-    public event EventHandler OnUpForce;
-    public event EventHandler OnLeftForce;
-    public event EventHandler OnRightForce;
-    public event EventHandler OnBeforeForce;
-    public event EventHandler OnCoinPickup;
-    public event EventHandler OnFuelPickup;
-    public event EventHandler<OnStateChangedEventArgs> OnStateChanged;
     public class OnStateChangedEventArgs : EventArgs
     {
         public State state;
     }
-    public event EventHandler<OnLandedEventArgs> OnLanded;
+
     public class OnLandedEventArgs : EventArgs
     {
         public LandingType landingType;
@@ -44,6 +32,23 @@ public class Lander : MonoBehaviour
         GameOver,
     }
 
+    public const float GRAVITY_NORMAL = 0.7f;
+    private const float GAMEPAD_DEADZONE = 0.4f;
+
+    public static Lander Instance { get; private set; }
+
+    public event EventHandler OnUpForce;
+    public event EventHandler OnLeftForce;
+    public event EventHandler OnRightForce;
+    public event EventHandler OnBeforeForce;
+    public event EventHandler OnCoinPickup;
+    public event EventHandler OnFuelPickup;
+    public event EventHandler<OnStateChangedEventArgs> OnStateChanged;
+    public event EventHandler<OnLandedEventArgs> OnLanded;
+
+    [SerializeField] private float force = 14f;
+    [SerializeField] private float turnSpeed = 2f;
+
     private Rigidbody2D landerRigidbody2D;
     private float fuelAmount;
     private float fuelAmountMax = 10f;
@@ -64,58 +69,58 @@ public class Lander : MonoBehaviour
     {
         OnBeforeForce?.Invoke(this, EventArgs.Empty);
 
+        Vector2 movementInput = GameInput.Instance.GetMovementInputVector2();
+        bool hasGamepadInput =
+            movementInput.sqrMagnitude >
+            GAMEPAD_DEADZONE * GAMEPAD_DEADZONE;
+
         switch (state)
         {
             default:
-                case State.WaitingToStart:
-                    if (GameInput.Instance.IsUpActionPressed() ||
-                        GameInput.Instance.IsLeftActionPressed() ||
-                        GameInput.Instance.IsRightActionPressed() ||
-                        GameInput.Instance.GetMovementInputVector2() != Vector2.zero)
-                    {
-                        landerRigidbody2D.gravityScale = GRAVITY_NORMAL;
-                        SetState(State.Normal);
-                    }
-                    break;
-                case State.Normal:
-                    if (fuelAmount <= 0f)
-                    {   
-                        // No fuel
-                        return;
-                    }
+            case State.WaitingToStart:
+                if (GameInput.Instance.IsUpActionPressed() ||
+                    GameInput.Instance.IsLeftActionPressed() ||
+                    GameInput.Instance.IsRightActionPressed() ||
+                    hasGamepadInput)
+                {
+                    landerRigidbody2D.gravityScale = GRAVITY_NORMAL;
+                    SetState(State.Normal);
+                }
+                break;
 
-                    float gamepadDeadzone = .4f;
+            case State.Normal:
+                if (fuelAmount <= 0f)
+                {
+                    // No fuel
+                    return;
+                }
 
-                    if (GameInput.Instance.IsUpActionPressed() || GameInput.Instance.GetMovementInputVector2().y > gamepadDeadzone)
-                    {
-                        float force = 700f;
-                        landerRigidbody2D.AddForce(force * transform.up * Time.deltaTime);
-                        ConsumeFuel(1f);
-                        OnUpForce?.Invoke(this, EventArgs.Empty);
-                    }
+                if (GameInput.Instance.IsUpActionPressed() || movementInput.y > GAMEPAD_DEADZONE)
+                {
+                    landerRigidbody2D.AddForce(force * transform.up);
+                    ConsumeFuel(1f);
+                    OnUpForce?.Invoke(this, EventArgs.Empty);
+                }
 
-                    if (GameInput.Instance.IsLeftActionPressed() || GameInput.Instance.GetMovementInputVector2().x < -gamepadDeadzone)
-                    {
-                        float turnSpeed = 100f;
-                        landerRigidbody2D.AddTorque(turnSpeed * Time.deltaTime);
-                        ConsumeFuel(0.3f);
-                        OnLeftForce?.Invoke(this, EventArgs.Empty);
+                if (GameInput.Instance.IsLeftActionPressed() || movementInput.x < -GAMEPAD_DEADZONE)
+                {
+                    landerRigidbody2D.AddTorque(turnSpeed);
+                    ConsumeFuel(0.3f);
+                    OnLeftForce?.Invoke(this, EventArgs.Empty);
 
-                    }
+                }
 
-                    if (GameInput.Instance.IsRightActionPressed() || GameInput.Instance.GetMovementInputVector2().x > gamepadDeadzone)
-                    {
-                        float turnSpeed = -100f;
-                        landerRigidbody2D.AddTorque(turnSpeed * Time.deltaTime);
-                        ConsumeFuel(0.3f);
-                        OnRightForce?.Invoke(this, EventArgs.Empty);
+                if (GameInput.Instance.IsRightActionPressed() || movementInput.x > GAMEPAD_DEADZONE)
+                {
+                    landerRigidbody2D.AddTorque(-turnSpeed);
+                    ConsumeFuel(0.3f);
+                    OnRightForce?.Invoke(this, EventArgs.Empty);
+                }
+                break;
 
-                    }
-                    break;
-                case State.GameOver:
-                    break;
+            case State.GameOver:
+                break;
         }
-
     }
 
     private void OnCollisionEnter2D(Collision2D collision2D)
@@ -181,7 +186,7 @@ public class Lander : MonoBehaviour
         Debug.Log("LandingAngleScore:" + landingAngleScore);
         Debug.Log("LandingSpeedScore:" + landingSpeedScore);
 
-        int score = (Mathf.RoundToInt(landingAngleScore + landingSpeedScore) * landingPad.GetScoreMultiplier());
+        int score = Mathf.RoundToInt(landingAngleScore + landingSpeedScore) * landingPad.GetScoreMultiplier();
 
         Debug.Log("score: " + score);
         OnLanded?.Invoke(this, new OnLandedEventArgs
@@ -216,26 +221,6 @@ public class Lander : MonoBehaviour
         }
     }
 
-    private void SetState(State state)
-    {
-        this.state = state;
-        OnStateChanged?.Invoke(this, new OnStateChangedEventArgs
-        {
-            state = state,
-        });
-    }
-
-    private void ConsumeFuel(float amount)
-    {
-        float fuelConsumptionAmount = amount;
-        if (fuelAmount <= amount * Time.deltaTime)
-        {
-            fuelAmount = 0f;
-            return;
-        }
-        fuelAmount -= fuelConsumptionAmount * Time.deltaTime;
-    }
-
     public float GetFuel()
     {
         return fuelAmount;
@@ -254,5 +239,25 @@ public class Lander : MonoBehaviour
     public float GetSpeedY()
     {
         return landerRigidbody2D.linearVelocityY;
+    }
+
+    private void SetState(State state)
+    {
+        this.state = state;
+        OnStateChanged?.Invoke(this, new OnStateChangedEventArgs
+        {
+            state = state,
+        });
+    }
+
+    private void ConsumeFuel(float amount)
+    {
+        float fuelConsumptionAmount = amount;
+        if (fuelAmount <= amount * Time.deltaTime)
+        {
+            fuelAmount = 0f;
+            return;
+        }
+        fuelAmount -= fuelConsumptionAmount * Time.deltaTime;
     }
 }

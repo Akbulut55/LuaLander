@@ -6,16 +6,10 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set;}
+    public static GameManager Instance { get; private set; }
 
     private static int levelNumber = 1;
     private static int totalScore;
-
-    public static void ResetStaticData()
-    {
-        levelNumber = 1;
-        totalScore = 0;
-    }
 
     public event EventHandler OnGamePaused;
     public event EventHandler OnGameUnPaused;
@@ -55,28 +49,6 @@ public class GameManager : MonoBehaviour
         PauseUnPauseGame();
     }
 
-    private void LoadCurrentLevel()
-    {
-        GameLevel gameLevel = GetGameLevel();
-        GameLevel spawnedGameLevel = Instantiate(gameLevel, Vector3.zero, Quaternion.identity);
-        Lander.Instance.transform.position = spawnedGameLevel.GetLanderStartPosition();
-        cinemachineCamera.Target.TrackingTarget = spawnedGameLevel.GetCameraStartTargetTransform();
-        CinemachineCameraZoom2D.Instance.SetTargetOrtographicSize(spawnedGameLevel.GetZoomedOutOrtographicSize());
-    }
-
-    private GameLevel GetGameLevel()
-    {
-        foreach (GameLevel gameLevel in gameLevelList)
-        {
-            if (gameLevel.GetLevelNumber() == levelNumber)
-            {
-                return gameLevel;
-                
-            }
-        }
-        return null;
-    }
-
     private void Lander_OnCoinPickup(object sender, System.EventArgs e)
     {
         AddScore(500);
@@ -96,6 +68,12 @@ public class GameManager : MonoBehaviour
             cinemachineCamera.Target.TrackingTarget = Lander.Instance.transform;
             CinemachineCameraZoom2D.Instance.SetNormalOrtographicSize();
         }
+    }
+
+    public static void ResetStaticData()
+    {
+        levelNumber = 1;
+        totalScore = 0;
     }
 
     public void AddScore(int addScoreAmount)
@@ -168,5 +146,26 @@ public class GameManager : MonoBehaviour
     public int GetLevelNumber()
     {
         return levelNumber;
+    }
+
+    private void LoadCurrentLevel()
+    {
+        GameLevel gameLevel = GetGameLevel();
+        GameLevel spawnedGameLevel = Instantiate(gameLevel, Vector3.zero, Quaternion.identity);
+        Lander.Instance.transform.position = spawnedGameLevel.GetLanderStartPosition();
+        cinemachineCamera.Target.TrackingTarget = spawnedGameLevel.GetCameraStartTargetTransform();
+        CinemachineCameraZoom2D.Instance.SetTargetOrtographicSize(spawnedGameLevel.GetZoomedOutOrtographicSize());
+    }
+
+    private GameLevel GetGameLevel()
+    {
+        foreach (GameLevel gameLevel in gameLevelList)
+        {
+            if (gameLevel.GetLevelNumber() == levelNumber)
+            {
+                return gameLevel;
+            }
+        }
+        return null;
     }
 }

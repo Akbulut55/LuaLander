@@ -19,6 +19,11 @@ public class GameInput : MonoBehaviour
         inputActions.Player.Menu.performed += Menu_Performed;
     }
 
+    private void OnDestroy()
+    {
+        inputActions.Disable();
+    }
+
     private void Menu_Performed(InputAction.CallbackContext context)
     {
         OnMenuButtonPressed?.Invoke(this, EventArgs.Empty);
@@ -42,10 +47,5 @@ public class GameInput : MonoBehaviour
     public Vector2 GetMovementInputVector2()
     {
         return inputActions.Player.Movement.ReadValue<Vector2>();
-    }
-
-    private void OnDestroy()
-    {
-        inputActions.Disable();
     }
 }

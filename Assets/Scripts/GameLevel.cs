@@ -5,7 +5,7 @@ public class GameLevel : MonoBehaviour
    [SerializeField] private int levelNumber;
    [SerializeField] private Transform landerStartPositionTransform;
    [SerializeField] private Transform cameraStartTargetTransform;
-   [SerializeField] private float zoomedOutOrtographicSize;
+   [SerializeField] private float zoomedOutOrthographicSize;
 
    public int GetLevelNumber()
     {
@@ -24,6 +24,6 @@ public class GameLevel : MonoBehaviour
 
     public float GetZoomedOutOrtographicSize()
     {
-        return zoomedOutOrtographicSize;
+        return zoomedOutOrthographicSize;
     }
 }

@@ -362,7 +362,7 @@ MonoBehaviour:
   levelNumber: 1
   landerStartPositionTransform: {fileID: 1275982277885569889}
   cameraStartTargetTransform: {fileID: 7096510962139083592}
-  zoomedOutOrtographicSize: 15
+  zoomedOutOrthographicSize: 15
 --- !u!1 &7360836005651185128
 GameObject:
   m_ObjectHideFlags: 0
