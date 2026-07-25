@@ -34,6 +34,11 @@ public class Lander : MonoBehaviour
 
     public const float GRAVITY_NORMAL = 0.7f;
     private const float GAMEPAD_DEADZONE = 0.4f;
+    private const float SOFT_LANDING_SPEED = 4f;
+    private const float MIN_LANDING_DOT = 0.9f;
+    private const float MAX_LANDING_ANGLE_SCORE = 100f;
+    private const float LANDING_ANGLE_PENALTY = 10f;
+    private const float LANDING_SPEED_SCORE_MULTIPLIER = 100f;
 
     public static Lander Instance { get; private set; }
 
@@ -89,10 +94,16 @@ public class Lander : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision2D)
     {
+        if (state != State.Normal)
+        {
+            return;
+        }
+
         if (!collision2D.gameObject.TryGetComponent(out LandingPad landingPad))
         {
             Debug.Log("Crashed on the terrain");
-            OnLanded?.Invoke(this, new OnLandedEventArgs
+
+            CompleteLanding(new OnLandedEventArgs
             {
                 landingType = LandingType.WrongLandingArea,
                 dotVector = 0f,
@@ -100,68 +111,11 @@ public class Lander : MonoBehaviour
                 scoreMultiplier = 0,
                 score = 0,
             });
-            SetState(State.GameOver);
+
             return;
         }
 
-        float softLandingVelocityMagnitude = 4f;
-        float relativeVelocityMagnitude = collision2D.relativeVelocity.magnitude;
-        if (relativeVelocityMagnitude > softLandingVelocityMagnitude)
-        {
-            Debug.Log("Landed too hard!");
-            OnLanded?.Invoke(this, new OnLandedEventArgs
-            {
-                landingType = LandingType.TooFastLanding,
-                dotVector = 0f,
-                landingSpeed = relativeVelocityMagnitude,
-                scoreMultiplier = 0,
-                score = 0,
-            });
-            SetState(State.GameOver);
-            return;
-        }
-
-        float dotVector = Vector2.Dot(Vector2.up, transform.up);
-        float minDotVector = .90f;
-        if (dotVector < minDotVector)
-        {
-            Debug.Log("Landed on too steep angle.");
-            OnLanded?.Invoke(this, new OnLandedEventArgs
-            {
-                landingType = LandingType.TooSteepAngle,
-                dotVector = dotVector,
-                landingSpeed = relativeVelocityMagnitude,
-                scoreMultiplier = 0,
-                score = 0,
-            });
-            SetState(State.GameOver);
-            return;
-        }
-
-        Debug.Log("Successful landing.");
-
-        float maxScoreAmountLandingAngle = 100;
-        float maxScoreDotVectorMultiplier = 10f;
-        float landingAngleScore = maxScoreAmountLandingAngle - Mathf.Abs(dotVector - 1f) * maxScoreDotVectorMultiplier * maxScoreAmountLandingAngle;
-
-        float maxScoreAmountLandingSpeed = 100;
-        float landingSpeedScore = (softLandingVelocityMagnitude - relativeVelocityMagnitude) * maxScoreAmountLandingSpeed;
-
-        Debug.Log("LandingAngleScore:" + landingAngleScore);
-        Debug.Log("LandingSpeedScore:" + landingSpeedScore);
-
-        int score = Mathf.RoundToInt(landingAngleScore + landingSpeedScore) * landingPad.GetScoreMultiplier();
-
-        Debug.Log("score: " + score);
-        OnLanded?.Invoke(this, new OnLandedEventArgs
-        {
-            landingType = LandingType.Success,
-            dotVector = dotVector,
-            landingSpeed = relativeVelocityMagnitude,
-            scoreMultiplier = landingPad.GetScoreMultiplier(),
-            score = score,
-        });
-        SetState(State.GameOver);
+        EvaluateLanding(collision2D, landingPad);
     }
 
     private void OnTriggerEnter2D(Collider2D collider2D)
@@ -271,5 +225,97 @@ public class Lander : MonoBehaviour
             ConsumeFuel(0.3f);
             OnRightForce?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    private void EvaluateLanding(
+        Collision2D collision2D,
+        LandingPad landingPad)
+    {
+        float landingSpeed =
+            collision2D.relativeVelocity.magnitude;
+
+        if (landingSpeed > SOFT_LANDING_SPEED)
+        {
+            Debug.Log("Landed too hard!");
+
+            CompleteLanding(new OnLandedEventArgs
+            {
+                landingType = LandingType.TooFastLanding,
+                dotVector = 0f,
+                landingSpeed = landingSpeed,
+                scoreMultiplier = 0,
+                score = 0,
+            });
+
+            return;
+        }
+
+        float landingDot =
+            Vector2.Dot(Vector2.up, transform.up);
+
+        if (landingDot < MIN_LANDING_DOT)
+        {
+            Debug.Log("Landed on too steep angle.");
+
+            CompleteLanding(new OnLandedEventArgs
+            {
+                landingType = LandingType.TooSteepAngle,
+                dotVector = landingDot,
+                landingSpeed = landingSpeed,
+                scoreMultiplier = 0,
+                score = 0,
+            });
+
+            return;
+        }
+
+        Debug.Log("Successful landing.");
+
+        int scoreMultiplier = landingPad.GetScoreMultiplier();
+        int score = CalculateLandingScore(
+            landingDot,
+            landingSpeed,
+            scoreMultiplier);
+
+        Debug.Log("score: " + score);
+
+        CompleteLanding(new OnLandedEventArgs
+        {
+            landingType = LandingType.Success,
+            dotVector = landingDot,
+            landingSpeed = landingSpeed,
+            scoreMultiplier = scoreMultiplier,
+            score = score,
+        });
+    }
+
+    private int CalculateLandingScore(
+        float landingDot,
+        float landingSpeed,
+        int scoreMultiplier)
+    {
+        float landingAngleScore =
+            MAX_LANDING_ANGLE_SCORE -
+            Mathf.Abs(landingDot - 1f) *
+            LANDING_ANGLE_PENALTY *
+            MAX_LANDING_ANGLE_SCORE;
+
+        float landingSpeedScore =
+            (SOFT_LANDING_SPEED - landingSpeed) *
+            LANDING_SPEED_SCORE_MULTIPLIER;
+
+        Debug.Log("LandingAngleScore:" + landingAngleScore);
+        Debug.Log("LandingSpeedScore:" + landingSpeedScore);
+
+        return Mathf.RoundToInt(
+            landingAngleScore + landingSpeedScore) *
+            scoreMultiplier;
+    }
+
+    private void CompleteLanding(
+        OnLandedEventArgs landingResult)
+    {
+        OnLanded?.Invoke(this, landingResult);
+        SetState(State.GameOver);
     }
 }
