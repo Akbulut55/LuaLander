@@ -69,53 +69,17 @@ public class Lander : MonoBehaviour
     {
         OnBeforeForce?.Invoke(this, EventArgs.Empty);
 
-        Vector2 movementInput = GameInput.Instance.GetMovementInputVector2();
-        bool hasGamepadInput =
-            movementInput.sqrMagnitude >
-            GAMEPAD_DEADZONE * GAMEPAD_DEADZONE;
+        Vector2 movementInput =
+            GameInput.Instance.GetMovementInputVector2();
 
         switch (state)
         {
-            default:
             case State.WaitingToStart:
-                if (GameInput.Instance.IsUpActionPressed() ||
-                    GameInput.Instance.IsLeftActionPressed() ||
-                    GameInput.Instance.IsRightActionPressed() ||
-                    hasGamepadInput)
-                {
-                    landerRigidbody2D.gravityScale = GRAVITY_NORMAL;
-                    SetState(State.Normal);
-                }
+                HandleWaitingToStart(movementInput);
                 break;
 
             case State.Normal:
-                if (fuelAmount <= 0f)
-                {
-                    // No fuel
-                    return;
-                }
-
-                if (GameInput.Instance.IsUpActionPressed() || movementInput.y > GAMEPAD_DEADZONE)
-                {
-                    landerRigidbody2D.AddForce(force * transform.up);
-                    ConsumeFuel(1f);
-                    OnUpForce?.Invoke(this, EventArgs.Empty);
-                }
-
-                if (GameInput.Instance.IsLeftActionPressed() || movementInput.x < -GAMEPAD_DEADZONE)
-                {
-                    landerRigidbody2D.AddTorque(turnSpeed);
-                    ConsumeFuel(0.3f);
-                    OnLeftForce?.Invoke(this, EventArgs.Empty);
-
-                }
-
-                if (GameInput.Instance.IsRightActionPressed() || movementInput.x > GAMEPAD_DEADZONE)
-                {
-                    landerRigidbody2D.AddTorque(-turnSpeed);
-                    ConsumeFuel(0.3f);
-                    OnRightForce?.Invoke(this, EventArgs.Empty);
-                }
+                HandleNormalFlight(movementInput);
                 break;
 
             case State.GameOver:
@@ -259,5 +223,53 @@ public class Lander : MonoBehaviour
             return;
         }
         fuelAmount -= fuelConsumptionAmount * Time.deltaTime;
+    }
+
+    private void HandleWaitingToStart(Vector2 movementInput)
+    {
+        bool hasGamepadInput =
+            movementInput.sqrMagnitude >
+            GAMEPAD_DEADZONE * GAMEPAD_DEADZONE;
+
+        if (GameInput.Instance.IsUpActionPressed() ||
+            GameInput.Instance.IsLeftActionPressed() ||
+            GameInput.Instance.IsRightActionPressed() ||
+            hasGamepadInput)
+        {
+            landerRigidbody2D.gravityScale = GRAVITY_NORMAL;
+            SetState(State.Normal);
+        }
+    }
+
+    private void HandleNormalFlight(Vector2 movementInput)
+    {
+        if (fuelAmount <= 0f)
+        {
+            return;
+        }
+
+        if (GameInput.Instance.IsUpActionPressed() ||
+            movementInput.y > GAMEPAD_DEADZONE)
+        {
+            landerRigidbody2D.AddForce(force * transform.up);
+            ConsumeFuel(1f);
+            OnUpForce?.Invoke(this, EventArgs.Empty);
+        }
+
+        if (GameInput.Instance.IsLeftActionPressed() ||
+            movementInput.x < -GAMEPAD_DEADZONE)
+        {
+            landerRigidbody2D.AddTorque(turnSpeed);
+            ConsumeFuel(0.3f);
+            OnLeftForce?.Invoke(this, EventArgs.Empty);
+        }
+
+        if (GameInput.Instance.IsRightActionPressed() ||
+            movementInput.x > GAMEPAD_DEADZONE)
+        {
+            landerRigidbody2D.AddTorque(-turnSpeed);
+            ConsumeFuel(0.3f);
+            OnRightForce?.Invoke(this, EventArgs.Empty);
+        }
     }
 }
